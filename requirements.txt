@@ -1,0 +1,16 @@
+langchain
+langchain-community
+pymupdf
+unstructured
+python-pptx
+PyPDF2
+psycopg2-binary
+requests
+psycopg
+sqlalchemy
+pillow
+flask
+flask-cors
+python-dotenv
+beautifulsoup4
+gunicorn

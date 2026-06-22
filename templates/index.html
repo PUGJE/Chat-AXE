@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat AXE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-deep: #050506;
+            --bg-base: #0a0a0f;
+            --bg-elevated: #111118;
+            --bg-surface: rgba(255,255,255,0.04);
+            --bg-surface-hover: rgba(255,255,255,0.07);
+            --text-primary: #EDEDEF;
+            --text-secondary: #8A8F98;
+            --text-muted: #555;
+            --accent: #5E6AD2;
+            --accent-glow: rgba(94,106,210,0.25);
+            --accent-hover: #6E7AE2;
+            --success: #34D399;
+            --success-bg: rgba(52,211,153,0.1);
+            --danger: #F87171;
+            --danger-bg: rgba(248,113,113,0.1);
+            --warning: #FBBF24;
+            --border: rgba(255,255,255,0.08);
+            --border-focus: rgba(94,106,210,0.5);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-lg: 16px;
+            --sidebar-w: 360px;
+            --header-h: 60px;
+            --transition: cubic-bezier(0.16,1,0.3,1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 0; min-width: 0; overflow: hidden;
+            background: var(--bg-base);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            transition: width 0.35s var(--transition), min-width 0.35s var(--transition);
+        }
+        .sidebar.open { width: var(--sidebar-w); min-width: var(--sidebar-w); }
+
+        .sidebar-header {
+            height: var(--header-h);
+            padding: 0 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
+        }
+        .sidebar-header h2 {
+            font-size: 0.85rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--text-secondary); white-space: nowrap;
+        }
+        .close-btn {
+            width: 32px; height: 32px; border-radius: var(--radius-sm);
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-secondary); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .close-btn:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+
+        .sidebar-body {
+            flex: 1; overflow-y: auto;
+            padding: 1.25rem; display: flex; flex-direction: column; gap: 1.5rem;
+        }
+
+        /* ── Sidebar Sections ── */
+        .sb-section {
+            background: var(--bg-elevated);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+        }
+        .sb-label {
+            font-size: 0.7rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 0.85rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .sb-label svg { opacity: 0.6; }
+        .sb-input {
+            width: 100%; padding: 0.65rem 0.85rem;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--bg-surface); color: var(--text-primary);
+            font-family: inherit; font-size: 0.875rem;
+            outline: none; margin-bottom: 0.6rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .sb-input:focus { border-color: var(--border-focus); background: rgba(255,255,255,0.06); }
+        .sb-input::placeholder { color: var(--text-muted); }
+        .sb-input[type="file"] { padding: 0.5rem 0.6rem; font-size: 0.8rem; cursor: pointer; }
+        .sb-input[type="file"]::file-selector-button {
+            background: var(--accent); color: #fff; border: none;
+            padding: 0.3rem 0.7rem; border-radius: 6px;
+            cursor: pointer; margin-right: 0.6rem;
+            font-size: 0.75rem; font-weight: 500; font-family: inherit;
+            transition: background 0.2s;
+        }
+        .sb-input[type="file"]::file-selector-button:hover { background: var(--accent-hover); }
+
+        .sb-btn {
+            width: 100%; padding: 0.65rem;
+            border: none; border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 0.875rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .sb-btn-primary {
+            background: var(--accent); color: #fff;
+        }
+        .sb-btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 16px var(--accent-glow); }
+        .sb-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+        /* ── Collection Cards ── */
+        .collection-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .collection-card {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 0.85rem;
+            background: var(--bg-surface); border-radius: var(--radius-sm);
+            border: 1px solid var(--border); transition: background 0.2s;
+        }
+        .collection-card:hover { background: var(--bg-surface-hover); }
+        .collection-info { flex: 1; min-width: 0; }
+        .collection-name {
+            font-weight: 600; font-size: 0.875rem;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .collection-meta { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+        .collection-delete {
+            width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+            background: transparent; border: 1px solid transparent;
+            color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            margin-left: 0.5rem; transition: all 0.2s;
+        }
+        .collection-delete:hover {
+            background: var(--danger-bg); border-color: rgba(248,113,113,0.2);
+            color: var(--danger);
+        }
+        .no-collections { text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 1.5rem 0.5rem; line-height: 1.6; }
+
+        /* ── Ingestion Overlay ── */
+        .ingest-overlay {
+            position: fixed; inset: 0; z-index: 2000;
+            background: rgba(5,5,6,0.85); backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .ingest-overlay.visible { opacity: 1; pointer-events: all; }
+        .ingest-modal {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 3rem;
+            width: 420px; max-width: 90vw;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+        .ingest-icon {
+            width: 56px; height: 56px; margin: 0 auto 1.25rem;
+            border-radius: 50%;
+            background: var(--accent-glow);
+            display: flex; align-items: center; justify-content: center;
+            animation: pulse-ring 2s ease-in-out infinite;
+        }
+        .ingest-icon svg { color: var(--accent); }
+        .ingest-title { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .ingest-detail { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5; }
+        .ingest-status { font-size: 0.8rem; color: var(--accent); font-weight: 500; text-transform: capitalize; margin-bottom: 1rem; }
+
+        .progress-track {
+            width: 100%; height: 6px; background: rgba(255,255,255,0.06);
+            border-radius: 3px; overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%; width: 30%;
+            background: linear-gradient(90deg, var(--accent), #818CF8);
+            border-radius: 3px;
+            animation: progress-slide 1.8s ease-in-out infinite;
+        }
+        .ingest-hint {
+            margin-top: 1.25rem; font-size: 0.75rem;
+            color: var(--text-muted); line-height: 1.5;
+        }
+
+        /* ── Toast Notifications ── */
+        .toast-container {
+            position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 3000;
+            display: flex; flex-direction: column-reverse; gap: 0.6rem;
+        }
+        .toast {
+            padding: 0.85rem 1.25rem;
+            border-radius: var(--radius-sm);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            font-size: 0.85rem; font-weight: 500;
+            display: flex; align-items: center; gap: 0.6rem;
+            animation: toast-in 0.35s var(--transition);
+            max-width: 380px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.success .toast-dot { background: var(--success); }
+        .toast.error { border-left: 3px solid var(--danger); }
+        .toast.error .toast-dot { background: var(--danger); }
+        .toast-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        /* ── Main ── */
+        .main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-deep); }
+
+        .header {
+            height: var(--header-h);
+            padding: 0 1.5rem;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-base);
+            flex-shrink: 0;
+        }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+
+        .toggle-btn {
+            height: 36px; padding: 0 0.85rem;
+            background: var(--bg-surface); border: 1px solid var(--border);
+            color: var(--text-secondary); border-radius: var(--radius-sm);
+            cursor: pointer; font-family: inherit; font-size: 0.8rem; font-weight: 500;
+            display: flex; align-items: center; gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        .toggle-btn:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+        .toggle-btn.active { background: rgba(94,106,210,0.12); border-color: rgba(94,106,210,0.3); color: var(--accent); }
+
+        .header-right { display: flex; align-items: center; gap: 0.6rem; }
+        .health-badge {
+            display: flex; align-items: center; gap: 0.4rem;
+            padding: 0.3rem 0.7rem; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 500;
+            background: var(--bg-surface); border: 1px solid var(--border);
+        }
+        .health-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--text-muted); transition: all 0.3s;
+        }
+        .health-dot.ok { background: var(--success); box-shadow: 0 0 6px rgba(52,211,153,0.5); }
+        .health-dot.err { background: var(--danger); box-shadow: 0 0 6px rgba(248,113,113,0.5); }
+
+        /* ── Chat ── */
+        .chat-container {
+            flex: 1; overflow-y: auto;
+            padding: 2rem 1.5rem;
+            display: flex; flex-direction: column; gap: 1rem;
+        }
+        .message {
+            display: flex; gap: 0.85rem;
+            padding: 1.15rem 1.25rem;
+            border-radius: var(--radius);
+            animation: fadeIn 0.35s var(--transition);
+            border: 1px solid var(--border);
+            max-width: 85%;
+        }
+        .message.user {
+            background: rgba(94,106,210,0.1);
+            border-color: rgba(94,106,210,0.15);
+            align-self: flex-end;
+        }
+        .message.assistant, .message.loading {
+            background: var(--bg-elevated);
+            align-self: flex-start;
+        }
+        .avatar {
+            width: 34px; height: 34px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 0.8rem; flex-shrink: 0;
+        }
+        .user .avatar { background: var(--accent); color: #fff; }
+        .assistant .avatar, .loading .avatar { background: var(--bg-surface); color: var(--text-secondary); border: 1px solid var(--border); }
+        .message-content { flex: 1; line-height: 1.7; white-space: pre-wrap; font-size: 0.95rem; }
+
+        /* ── Input ── */
+        .input-container {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--bg-base);
+            flex-shrink: 0;
+        }
+        .input-wrapper { max-width: 760px; margin: 0 auto; position: relative; }
+        .message-input {
+            width: 100%; padding: 0.85rem 3.5rem 0.85rem 1.1rem;
+            border: 1px solid var(--border); border-radius: var(--radius);
+            background: var(--bg-elevated); color: var(--text-primary);
+            font-family: inherit; font-size: 0.95rem;
+            resize: none; min-height: 46px; max-height: 200px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .message-input::placeholder { color: var(--text-muted); }
+        .message-input:focus { border-color: var(--border-focus); }
+
+        .send-button {
+            position: absolute; right: 6px; bottom: 6px;
+            background: var(--accent); border: none;
+            border-radius: var(--radius-sm);
+            width: 36px; height: 36px;
+            color: #fff; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .send-button:hover { background: var(--accent-hover); box-shadow: 0 4px 12px var(--accent-glow); }
+        .send-button:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+
+        .loading-dots { color: var(--text-secondary); }
+        .loading-dots::after { content: ''; animation: dots 1.5s steps(5, end) infinite; }
+
+        /* ── Animations ── */
+        @keyframes dots {
+            0%, 20% { content: ''; } 40% { content: '.'; }
+            60% { content: '..'; } 80%, 100% { content: '...'; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(16px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes pulse-ring {
+            0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+            50% { box-shadow: 0 0 0 14px transparent; }
+        }
+        @keyframes progress-slide {
+            0% { width: 15%; margin-left: 0; }
+            50% { width: 55%; margin-left: 25%; }
+            100% { width: 15%; margin-left: 85%; }
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .sidebar.open { position: fixed; z-index: 100; height: 100vh; width: 100vw; min-width: 100vw; }
+            .chat-container { padding: 1rem; }
+            .message { max-width: 95%; padding: 0.85rem 1rem; }
+            .header h1 { font-size: 1rem; }
+            .ingest-modal { padding: 2rem 1.5rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Ingestion Overlay -->
+<div class="ingest-overlay" id="ingestOverlay">
+    <div class="ingest-modal">
+        <div class="ingest-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+        </div>
+        <div class="ingest-title" id="ingestTitle">Processing your document...</div>
+        <div class="ingest-detail" id="ingestDetail">Uploading and preparing your file for the knowledge base</div>
+        <div class="ingest-status" id="ingestStatus">Queued</div>
+        <div class="progress-track"><div class="progress-bar"></div></div>
+        <div class="ingest-hint">This may take a minute depending on the file size.<br>You'll be notified when it's done.</div>
+    </div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h2>Knowledge Base</h2>
+        <button class="close-btn" onclick="toggleSidebar()" title="Close sidebar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+    </div>
+    <div class="sidebar-body">
+
+        <div class="sb-section">
+            <div class="sb-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload Document
+            </div>
+            <input type="file" id="fileInput" class="sb-input" accept=".pdf,.pptx">
+            <input type="text" id="fileCollectionName" class="sb-input" placeholder="Collection name (auto from filename)">
+            <button class="sb-btn sb-btn-primary" id="uploadBtn" onclick="uploadFile()">Upload & Ingest</button>
+        </div>
+
+        <div class="sb-section">
+            <div class="sb-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Add Web Page
+            </div>
+            <input type="url" id="webUrl" class="sb-input" placeholder="https://example.com/page">
+            <input type="text" id="webCollectionName" class="sb-input" placeholder="Collection name">
+            <button class="sb-btn sb-btn-primary" id="webBtn" onclick="ingestWeb()">Scrape & Ingest</button>
+        </div>
+
+        <div class="sb-section">
+            <div class="sb-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Collections
+            </div>
+            <div id="collectionsList" class="collection-list">
+                <div class="no-collections">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+    <div class="header">
+        <div class="header-left">
+            <button class="toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                Knowledge Base
+            </button>
+            <h1>Chat AXE</h1>
+        </div>
+        <div class="header-right">
+            <div class="health-badge">
+                <div class="health-dot" id="healthDot"></div>
+                <span id="healthLabel">Checking...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="message assistant">
+            <div class="avatar">AI</div>
+            <div class="message-content">Hello! I'm your AI assistant. Upload documents or add web pages using the Knowledge Base panel, then ask me anything about them.</div>
+        </div>
+    </div>
+
+    <div class="input-container">
+        <div class="input-wrapper">
+            <textarea id="messageInput" class="message-input" placeholder="Ask me anything..." rows="1"></textarea>
+            <button id="sendButton" class="send-button" aria-label="Send message">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const chatContainer = $('chatContainer');
+const messageInput = $('messageInput');
+const sendButton = $('sendButton');
+const sidebar = $('sidebar');
+const overlay = $('ingestOverlay');
+
+let chatHistory = [];
+let activeJobs = {};
+
+// ── Sidebar ──
+function toggleSidebar() {
+    sidebar.classList.toggle('open');
+    $('sidebarToggle').classList.toggle('active');
+    if (sidebar.classList.contains('open')) loadCollections();
+}
+
+// ── Health ──
+async function checkHealth() {
+    try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        const dot = $('healthDot');
+        const label = $('healthLabel');
+        if (data.ok) {
+            dot.className = 'health-dot ok';
+            label.textContent = 'Online';
+        } else {
+            dot.className = 'health-dot err';
+            const down = [];
+            if (!data.postgres) down.push('DB');
+            if (!data.embeddings) down.push('Embeddings');
+            label.textContent = down.join(', ') + ' offline';
+        }
+    } catch {
+        $('healthDot').className = 'health-dot err';
+        $('healthLabel').textContent = 'Offline';
+    }
+}
+
+// ── Collections ──
+async function loadCollections() {
+    const list = $('collectionsList');
+    try {
+        const res = await fetch('/api/collections');
+        const cols = await res.json();
+        if (!cols.length) {
+            list.innerHTML = '<div class="no-collections">No collections yet.<br>Upload a document or add a web page to get started.</div>';
+            return;
+        }
+        list.innerHTML = cols.map(c => `
+            <div class="collection-card">
+                <div class="collection-info">
+                    <div class="collection-name">${esc(c.name)}</div>
+                    <div class="collection-meta">${c.chunks} chunks</div>
+                </div>
+                <button class="collection-delete" onclick="deleteCollection('${esc(c.name)}')" title="Delete collection" aria-label="Delete ${esc(c.name)}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>
+        `).join('');
+    } catch {
+        list.innerHTML = '<div class="no-collections">Failed to load</div>';
+    }
+}
+
+async function deleteCollection(name) {
+    if (!confirm(`Delete "${name}"? This removes all its data.`)) return;
+    try {
+        const res = await fetch(`/api/collections/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.status === 'deleted') { showToast(`"${name}" deleted`, 'success'); loadCollections(); }
+        else showToast(data.error || 'Delete failed', 'error');
+    } catch (e) { showToast('Delete failed: ' + e.message, 'error'); }
+}
+
+// ── Ingestion Overlay ──
+function showOverlay(title, detail) {
+    $('ingestTitle').textContent = title;
+    $('ingestDetail').textContent = detail;
+    $('ingestStatus').textContent = 'Queued';
+    overlay.classList.add('visible');
+}
+function updateOverlay(status) {
+    const labels = { queued: 'Queued...', reading: 'Reading document...', scraping: 'Scraping web page...', embedding: 'Creating embeddings... (this takes a moment)', complete: 'Done!', error: 'Failed' };
+    $('ingestStatus').textContent = labels[status] || status;
+}
+function hideOverlay() {
+    overlay.classList.remove('visible');
+}
+
+// ── Upload ──
+async function uploadFile() {
+    const fileInput = $('fileInput');
+    const nameInput = $('fileCollectionName');
+    const btn = $('uploadBtn');
+    if (!fileInput.files.length) return showToast('Select a file first', 'error');
+
+    const fileName = fileInput.files[0].name;
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('collection_name', nameInput.value.trim());
+
+    btn.disabled = true;
+    showOverlay('Processing your document...', fileName);
+
+    try {
+        const res = await fetch('/api/collections/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.error) { hideOverlay(); showToast(data.error, 'error'); btn.disabled = false; return; }
+        trackJob(data.job_id, data.collection || nameInput.value.trim() || fileName, fileName);
+        fileInput.value = ''; nameInput.value = '';
+    } catch (e) { hideOverlay(); showToast('Upload failed: ' + e.message, 'error'); }
+    btn.disabled = false;
+}
+
+// ── Web Ingest ──
+async function ingestWeb() {
+    const urlInput = $('webUrl');
+    const nameInput = $('webCollectionName');
+    const btn = $('webBtn');
+    if (!urlInput.value.trim()) return showToast('Enter a URL', 'error');
+    if (!nameInput.value.trim()) return showToast('Enter a collection name', 'error');
+
+    btn.disabled = true;
+    showOverlay('Scraping web page...', urlInput.value.trim());
+
+    try {
+        const res = await fetch('/api/collections/web', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlInput.value.trim(), collection_name: nameInput.value.trim() })
+        });
+        const data = await res.json();
+        if (data.error) { hideOverlay(); showToast(data.error, 'error'); btn.disabled = false; return; }
+        trackJob(data.job_id, nameInput.value.trim(), urlInput.value.trim());
+        urlInput.value = ''; nameInput.value = '';
+    } catch (e) { hideOverlay(); showToast('Failed: ' + e.message, 'error'); }
+    btn.disabled = false;
+}
+
+// ── Job Tracking ──
+function trackJob(jobId, collection, source) {
+    activeJobs[jobId] = { collection, source, status: 'queued' };
+    pollJob(jobId);
+}
+
+async function pollJob(jobId) {
+    try {
+        const res = await fetch(`/api/ingestion/${jobId}`);
+        const data = await res.json();
+        activeJobs[jobId].status = data.status;
+        updateOverlay(data.status);
+
+        if (data.status === 'complete') {
+            hideOverlay();
+            showToast(`"${activeJobs[jobId].collection}" added to knowledge base!`, 'success');
+            loadCollections();
+            return;
+        }
+        if (data.status === 'error') {
+            hideOverlay();
+            showToast(`Ingestion failed: ${data.error}`, 'error');
+            return;
+        }
+        setTimeout(() => pollJob(jobId), 1500);
+    } catch {
+        setTimeout(() => pollJob(jobId), 3000);
+    }
+}
+
+// ── Chat ──
+messageInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+});
+messageInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+sendButton.addEventListener('click', sendMessage);
+
+function sendMessage() {
+    const message = messageInput.value.trim();
+    if (!message) return;
+    addMessage('user', message);
+    messageInput.value = ''; messageInput.style.height = 'auto';
+    const loadingId = addLoadingMessage();
+    messageInput.disabled = true; sendButton.disabled = true;
+
+    fetch('/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, history: chatHistory })
+    })
+    .then(r => r.json())
+    .then(data => { removeEl(loadingId); addMessage('assistant', data.error ? `Error: ${data.error}` : data.response); })
+    .catch(err => { removeEl(loadingId); addMessage('assistant', `Error: ${err.message}`); })
+    .finally(() => { messageInput.disabled = false; sendButton.disabled = false; messageInput.focus(); });
+}
+
+function addMessage(role, content) {
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    div.innerHTML = `<div class="avatar">${role === 'user' ? 'You' : 'AI'}</div><div class="message-content">${esc(content)}</div>`;
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    chatHistory.push({ role, content });
+}
+
+function addLoadingMessage() {
+    const div = document.createElement('div');
+    div.className = 'message loading'; div.id = 'ld-' + Date.now();
+    div.innerHTML = '<div class="avatar">AI</div><div class="message-content"><span class="loading-dots">Thinking</span></div>';
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return div.id;
+}
+
+function removeEl(id) { const el = document.getElementById(id); if (el) el.remove(); }
+
+// ── Utils ──
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function showToast(msg, type) {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span class="toast-dot"></span>${esc(msg)}`;
+    $('toastContainer').appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(10px)'; setTimeout(() => t.remove(), 300); }, 4500);
+}
+
+// ── Init ──
+checkHealth();
+setInterval(checkHealth, 30000);
+loadCollections();
+</script>
+</body>
+</html>

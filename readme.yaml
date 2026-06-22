@@ -1,0 +1,117 @@
+Objective
+
+To build an agentic RAG-based chatbot for Chandigarh University that:
+
+Uses LLMs via Ollama (runs locally)
+
+Ingests university-specific knowledge (PDFs, PPTs, Wikipedia, etc.)
+
+Stores document chunks in a PostgreSQL database using PgVector
+
+Retrieves relevant context and passes it to the LLM to answer queries
+
+Outputs responses in the terminal (CLI-only for now)
+
+🛠️ Tools & Technologies
+
+Component
+
+Tool
+
+LLM
+
+Ollama (Mistral, Phi-3, etc.)
+
+Embeddings
+
+InstructorEmbeddings (preferred for offline), or HuggingFace
+
+Vector Store
+
+PostgreSQL + pgvector extension
+
+Document Loading
+
+LangChain loaders, Unstructured, PyMuPDF
+
+Chunking
+
+LangChain Text Splitter
+
+RAG Framework
+
+LangChain (with RetrievalQA + Agentic setup)
+
+Environment
+
+Python + Docker
+
+🧱 Project Architecture (Backend only)
+
+User inputs query via terminal
+
+Query is embedded
+
+Matching chunks fetched from PostgreSQL (via pgvector)
+
+Context + query passed to LLM (Ollama model)
+
+Response printed in terminalObjective
+
+To build an agentic RAG-based chatbot for Chandigarh University that:
+
+Uses LLMs via Ollama (runs locally)
+
+Ingests university-specific knowledge (PDFs, PPTs, Wikipedia, etc.)
+
+Stores document chunks in a PostgreSQL database using PgVector
+
+Retrieves relevant context and passes it to the LLM to answer queries
+
+Outputs responses in the terminal (CLI-only for now)
+
+🛠️ Tools & Technologies
+
+Component
+
+Tool
+
+LLM
+
+Ollama (Mistral, Phi-3, etc.)
+
+Embeddings
+
+InstructorEmbeddings (preferred for offline), or HuggingFace
+
+Vector Store
+
+PostgreSQL + pgvector extension
+
+Document Loading
+
+LangChain loaders, Unstructured, PyMuPDF
+
+Chunking
+
+LangChain Text Splitter
+
+RAG Framework
+
+LangChain (with RetrievalQA + Agentic setup)
+
+Environment
+
+Python + Docker
+
+🧱 Project Architecture (Backend only)
+
+User inputs query via terminal
+
+Query is embedded
+
+Matching chunks fetched from PostgreSQL (via pgvector)
+
+Context + query passed to LLM (Ollama model)
+
+Response printed in terminal
