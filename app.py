@@ -115,24 +115,25 @@ def index():
 
 @app.route('/api/health')
 def health():
-    status = {"postgres": False, "embeddings": False}
+    status = {"postgres": False, "embeddings": False, "embedding_provider": EMBEDDING_PROVIDER}
     try:
         from sqlalchemy import create_engine, text as sql_text
         engine = create_engine(DB_URL)
         with engine.connect() as conn:
             conn.execute(sql_text("SELECT 1"))
         status["postgres"] = True
-    except Exception:
-        pass
+    except Exception as e:
+        status["postgres_error"] = str(e)
     try:
         if EMBEDDING_PROVIDER == "huggingface":
             test = _embed_huggingface("test")
             status["embeddings"] = isinstance(test, list) and len(test) > 0
+            status["embedding_dim"] = len(test) if isinstance(test, list) else 0
         else:
             r = requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
             status["embeddings"] = r.status_code == 200
-    except Exception:
-        pass
+    except Exception as e:
+        status["embeddings_error"] = str(e)
     status["ok"] = all([status["postgres"], status["embeddings"]])
     return jsonify(status)
 
