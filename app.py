@@ -71,14 +71,14 @@ def _embed_ollama(text_input):
 
 
 def _embed_huggingface(text_input):
-    url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{EMBEDDING_MODEL}"
+    url = f"https://router.huggingface.co/hf-inference/models/{EMBEDDING_MODEL}"
     headers = {"Content-Type": "application/json"}
     if HF_API_TOKEN:
         headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
     response = requests.post(url, headers=headers, json={
         "inputs": text_input,
         "options": {"wait_for_model": True}
-    })
+    }, timeout=30)
     response.raise_for_status()
     result = response.json()
     if isinstance(result, list) and len(result) > 0:
