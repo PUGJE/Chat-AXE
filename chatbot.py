@@ -133,7 +133,7 @@ def get_embedding(text):
 
 if __name__ == "__main__":
     db_url = "postgresql+psycopg2://cu:cu@127.0.0.1:5532/cu"
-    model = Groq(model_id="llama3-70b-8192")
+    model = Groq(model_id="qwen/qwen3.8-27b")
     agent = Agent(model=model)
 
     # Mode selection

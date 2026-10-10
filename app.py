@@ -51,9 +51,23 @@ class Groq:
             "Content-Type": "application/json"
         }
         payload = {"model": self.model_id, "messages": messages}
-        response = requests.post(self.api_url, headers=headers, json=payload)
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
+
+        import time
+        last_error = None
+        for attempt in range(3):
+            response = requests.post(self.api_url, headers=headers, json=payload)
+            if response.status_code in (429, 503):
+                last_error = response
+                wait = 2 ** attempt  # 1s, 2s, 4s
+                print(f"  [Groq] {response.status_code} - retrying in {wait}s (attempt {attempt+1}/3)")
+                time.sleep(wait)
+                continue
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"]
+
+        # All retries exhausted
+        last_error.raise_for_status()
+
 
 
 def get_embedding(text_input):
@@ -93,7 +107,7 @@ def _embed_huggingface(text_input):
     return result
 
 
-model = Groq(model_id=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"))
+model = Groq(model_id=os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b"))
 
 
 def get_knowledge_base():
